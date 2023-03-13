@@ -20,7 +20,7 @@ namespace NZWalks.API.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllRegions()
+        public async Task<IActionResult> GetAllRegionsAsync()
         {
             var regions = await _regionRepository.GetAllAsync();
 
@@ -46,6 +46,75 @@ namespace NZWalks.API.Controllers
 
             return Ok(regionsDTO);
 
+        }
+
+        [HttpGet]
+        [Route("{id:guid}")]
+        [ActionName("GetRegionAsync")]
+        public async Task<IActionResult> GetRegionAsync(Guid id)
+        {
+            var region = await _regionRepository.GetAsync(id);
+
+            if (region == null)
+                return NotFound();
+
+            var regionDTO = _mapper.Map<RegionDTO>(region);
+
+            return Ok(regionDTO);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddRegionAsync([FromBody]CreateRegionDTO createRegion)
+        {
+            // Request(DTO) to Domain model
+            var region = _mapper.Map<Region>(createRegion);
+
+            // Pass details to Repository
+            region = await _regionRepository.AddAsync(region);
+
+            // Convert back to DTO
+            var createdRegion = _mapper.Map<RegionDTO>(region);
+
+            return CreatedAtAction(nameof(GetRegionAsync), new { id = createdRegion.Id}, createdRegion);
+        }
+
+        [HttpDelete]
+        [Route("{id:guid}")]
+        public async Task<IActionResult> DeleteRegionAsync(Guid id)
+        {
+            // Get region from database
+            var region = await _regionRepository.DeleteAsync(id);
+
+            //If null NotFound
+            if (region == null)
+                return NotFound();
+
+            // Convert response back to DTO
+            var deletedRegion = _mapper.Map<RegionDTO>(region);
+
+            // return Ok response
+            return Ok(deletedRegion);
+        }
+
+        [HttpPut]
+        [Route("{id:guid}")]
+        public async Task<IActionResult> UpdateRegionAsync([FromRoute]Guid id, [FromBody]UpdateRegionDTO updateRegion)
+        {
+            // Convert DTO to Domain Model
+            var region = _mapper.Map<Region>(updateRegion);
+
+            // Update Region using repository
+            region = await _regionRepository.UpdateAsync(id, region);
+
+            // If Null then NotFound
+            if (region == null)
+                return NotFound();
+
+            // Convert Domain to back to DTO
+            var updatedRegion = _mapper.Map<RegionDTO>(region);
+
+            //Return OK Response
+            return Ok(updatedRegion);
         }
 
     }
